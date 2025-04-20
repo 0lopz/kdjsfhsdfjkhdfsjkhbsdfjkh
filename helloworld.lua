@@ -1,4 +1,4 @@
--- Modern Sleek Dark UI Library
+-- Modern UI Library (Fixed)
 local ModernUI = {}
 
 -- Modern color palette
@@ -36,7 +36,7 @@ local function tween(instance, props, duration, style, direction)
     return tween
 end
 
--- Rounded corners with adjustable radius
+-- Rounded corners
 local function roundCorners(instance, radius)
     local corner = create("UICorner", {
         CornerRadius = UDim.new(radius or 0.25, 0),
@@ -45,7 +45,7 @@ local function roundCorners(instance, radius)
     return corner
 end
 
--- Thin subtle stroke
+-- Thin stroke
 local function addStroke(instance, color, thickness)
     local stroke = create("UIStroke", {
         Color = color or colors.light,
@@ -194,7 +194,7 @@ function ModernUI:CreateWindow(title)
     -- Tab functions
     local tabFunctions = {}
 
-    function tabFunctions:CreateTab(name, icon)
+    function tabFunctions:CreateTab(name)
         local tabButton = create("TextButton", {
             Name = name.."TabButton",
             Size = UDim2.new(0.25, -5, 1, 0),
@@ -209,17 +209,6 @@ function ModernUI:CreateWindow(title)
 
         roundCorners(tabButton, 0.1)
         addStroke(tabButton, colors.element, 1)
-
-        if icon then
-            tabButton.Text = ""
-            local iconLabel = create("ImageLabel", {
-                Image = "rbxassetid://"..icon,
-                Size = UDim2.new(0, 20, 0, 20),
-                Position = UDim2.new(0.5, -10, 0.5, -10),
-                BackgroundTransparency = 1,
-                Parent = tabButton
-            })
-        end
 
         local tabContent = create("ScrollingFrame", {
             Name = name.."TabContent",
