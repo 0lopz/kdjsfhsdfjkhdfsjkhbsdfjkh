@@ -1,143 +1,309 @@
-local JIGUID = {}
+local ModernUILib = {}
+ModernUILib.__index = ModernUILib
 
--- VAPE V4 inspired theme
-local theme = {
-    Background = Color3.fromRGB(15, 15, 20),
-    Primary = Color3.fromRGB(25, 25, 30),
-    Secondary = Color3.fromRGB(35, 35, 45),
-    Accent = Color3.fromRGB(0, 162, 255),
-    Text = Color3.fromRGB(220, 220, 220),
-    Divider = Color3.fromRGB(45, 45, 55),
-    Error = Color3.fromRGB(255, 50, 50)
+-- Theme configuration
+ModernUILib.Theme = {
+    Background = Color3.fromRGB(30, 30, 35),
+    TabHeader = Color3.fromRGB(45, 45, 50),
+    Button = Color3.fromRGB(50, 50, 55),
+    ButtonHover = Color3.fromRGB(65, 65, 70),
+    TextColor = Color3.fromRGB(240, 240, 240),
+    Accent = Color3.fromRGB(100, 150, 255),
+    Shadow = Color3.fromRGB(0, 0, 0, 0.5),
+    CornerRadius = 8,
+    Font = Enum.Font.Gotham,
+    FontBold = Enum.Font.GothamSemibold,
+    TextSize = 14
 }
 
--- Create main window with VAPE V4 styling
-function JIGUID:CreateWindow(title)
-    local JIGUIDLibrary = {}
+-- Create a new UI instance
+function ModernUILib.new(options)
+    local self = setmetatable({}, ModernUILib)
+    
+    -- Merge custom options with defaults
+    self.options = {
+        Name = options.Name or "ModernUI",
+        Size = options.Size or UDim2.new(0, 400, 0, 500),
+        Position = options.Position or UDim2.new(0.5, 0, 0.5, 0),
+        AnchorPoint = options.AnchorPoint or Vector2.new(0.5, 0.5),
+        Tabs = options.Tabs or {
+            {
+                Name = "Combat",
+                Buttons = {"Kill Aura", "Auto Click", "Reach", "Hitboxes"}
+            },
+            {
+                Name = "Rage",
+                Buttons = {"Spinbot", "Anti-Aim", "Fake Lag", "BHop"}
+            },
+            {
+                Name = "Visual",
+                Buttons = {"ESP", "Chams", "Tracers", "Fullbright"}
+            }
+        }
+    }
+    
+    self.currentTab = nil
+    self.tabFrames = {}
+    self.buttons = {}
+    
+    self:Initialize()
+    return self
+end
+
+-- Initialize the UI
+function ModernUILib:Initialize()
+    local Players = game:GetService("Players")
+    local TweenService = game:GetService("TweenService")
+    
+    -- Create main GUI
+    self.gui = Instance.new("ScreenGui")
+    self.gui.Name = self.options.Name
+    self.gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    self.gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+    
+    -- Create main container
+    self.mainFrame = Instance.new("Frame")
+    self.mainFrame.Name = "MainFrame"
+    self.mainFrame.BackgroundColor3 = self.Theme.Background
+    self.mainFrame.BorderSizePixel = 0
+    self.mainFrame.Size = self.options.Size
+    self.mainFrame.AnchorPoint = self.options.AnchorPoint
+    self.mainFrame.Position = self.options.Position
+    
+    -- Add corner rounding
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, self.Theme.CornerRadius)
+    UICorner.Parent = self.mainFrame
+    
+    -- Add shadow effect
+    local DropShadow = Instance.new("ImageLabel")
+    DropShadow.Name = "DropShadow"
+    DropShadow.BackgroundTransparency = 1
+    DropShadow.Size = UDim2.new(1, 10, 1, 10)
+    DropShadow.Position = UDim2.new(0, -5, 0, -5)
+    DropShadow.Image = "rbxassetid://1316045217"
+    DropShadow.ImageColor3 = self.Theme.Shadow
+    DropShadow.ImageTransparency = 0.5
+    DropShadow.ScaleType = Enum.ScaleType.Slice
+    DropShadow.SliceCenter = Rect.new(10, 10, 118, 118)
+    DropShadow.Parent = self.mainFrame
+    
+    -- Create tab buttons container
+    self.tabButtons = Instance.new("Frame")
+    self.tabButtons.Name = "TabButtons"
+    self.tabButtons.BackgroundTransparency = 1
+    self.tabButtons.Size = UDim2.new(1, 0, 0, 40)
+    self.tabButtons.Position = UDim2.new(0, 0, 0, 0)
+    self.tabButtons.Parent = self.mainFrame
+    
+    local UIListLayout = Instance.new("UIListLayout")
+    UIListLayout.FillDirection = Enum.FillDirection.Horizontal
+    UIListLayout.Padding = UDim.new(0, 5)
+    UIListLayout.Parent = self.tabButtons
+    
+    -- Create content frame
+    self.contentFrame = Instance.new("Frame")
+    self.contentFrame.Name = "ContentFrame"
+    self.contentFrame.BackgroundTransparency = 1
+    self.contentFrame.Size = UDim2.new(1, 0, 1, -40)
+    self.contentFrame.Position = UDim2.new(0, 0, 0, 40)
+    self.contentFrame.Parent = self.mainFrame
+    
+    -- Create all tabs
+    for i, tabData in ipairs(self.options.Tabs) do
+        self:CreateTab(tabData, i)
+    end
+    
+    -- Make the UI draggable
+    self:SetupDraggable()
+    
+    self.mainFrame.Parent = self.gui
+end
+
+-- Create a tab
+function ModernUILib:CreateTab(tabData, index)
+    local TabButton = Instance.new("TextButton")
+    TabButton.Name = tabData.Name.."Tab"
+    TabButton.Text = tabData.Name
+    TabButton.Size = UDim2.new(0.3, 0, 1, 0)
+    TabButton.BackgroundColor3 = self.Theme.TabHeader
+    TabButton.TextColor3 = self.Theme.TextColor
+    TabButton.Font = self.Theme.FontBold
+    TabButton.TextSize = self.Theme.TextSize
+    TabButton.BorderSizePixel = 0
+    
+    -- Add corner rounding to top only
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, self.Theme.CornerRadius)
+    UICorner.Parent = TabButton
+    
+    -- Add dropdown arrow
+    local Arrow = Instance.new("ImageLabel")
+    Arrow.Name = "Arrow"
+    Arrow.Image = "rbxassetid://3926305904"
+    Arrow.ImageRectOffset = Vector2.new(964, 324)
+    Arrow.ImageRectSize = Vector2.new(36, 36)
+    Arrow.Size = UDim2.new(0, 16, 0, 16)
+    Arrow.Position = UDim2.new(1, -20, 0.5, -8)
+    Arrow.BackgroundTransparency = 1
+    Arrow.ImageColor3 = self.Theme.TextColor
+    Arrow.Parent = TabButton
+    
+    -- Create tab content frame
+    local TabFrame = Instance.new("Frame")
+    TabFrame.Name = tabData.Name.."Frame"
+    TabFrame.BackgroundTransparency = 1
+    TabFrame.Size = UDim2.new(1, 0, 1, 0)
+    TabFrame.Visible = false
+    TabFrame.Parent = self.contentFrame
+    
+    -- Create buttons for this tab
+    local ButtonContainer = Instance.new("Frame")
+    ButtonContainer.Name = "ButtonContainer"
+    ButtonContainer.BackgroundTransparency = 1
+    ButtonContainer.Size = UDim2.new(1, -20, 1, -20)
+    ButtonContainer.Position = UDim2.new(0, 10, 0, 10)
+    ButtonContainer.Visible = false -- Initially hidden
+    ButtonContainer.Parent = TabFrame
+    
+    local UIListLayout = Instance.new("UIListLayout")
+    UIListLayout.Padding = UDim.new(0, 10)
+    UIListLayout.Parent = ButtonContainer
+    
+    -- Store button references
+    self.buttons[tabData.Name] = {}
+    
+    for i, btnName in ipairs(tabData.Buttons) do
+        local Button = Instance.new("TextButton")
+        Button.Name = btnName
+        Button.Text = btnName
+        Button.Size = UDim2.new(1, 0, 0, 40)
+        Button.BackgroundColor3 = self.Theme.Button
+        Button.TextColor3 = self.Theme.TextColor
+        Button.Font = self.Theme.Font
+        Button.TextSize = self.Theme.TextSize
+        Button.BorderSizePixel = 0
+        
+        -- Add corner rounding
+        local UICorner = Instance.new("UICorner")
+        UICorner.CornerRadius = UDim.new(0, self.Theme.CornerRadius)
+        UICorner.Parent = Button
+        
+        -- Store button reference
+        self.buttons[tabData.Name][btnName] = Button
+        
+        -- Hover effect
+        Button.MouseEnter:Connect(function()
+            self:Tween(Button, {BackgroundColor3 = self.Theme.ButtonHover}, 0.2)
+        end)
+        
+        Button.MouseLeave:Connect(function()
+            self:Tween(Button, {BackgroundColor3 = self.Theme.Button}, 0.2)
+        end)
+        
+        -- Click effect
+        Button.MouseButton1Down:Connect(function()
+            self:Tween(Button, {
+                BackgroundColor3 = self.Theme.Accent,
+                TextColor3 = Color3.new(1, 1, 1)
+            }, 0.1)
+        end)
+        
+        Button.MouseButton1Up:Connect(function()
+            self:Tween(Button, {
+                BackgroundColor3 = self.Theme.ButtonHover,
+                TextColor3 = self.Theme.TextColor
+            }, 0.2)
+        end)
+        
+        Button.Parent = ButtonContainer
+    end
+    
+    -- Tab button click functionality
+    TabButton.MouseButton1Click:Connect(function()
+        if self.currentTab == TabButton then
+            -- Toggle dropdown
+            local isVisible = ButtonContainer.Visible
+            ButtonContainer.Visible = not isVisible
+            
+            -- Rotate arrow
+            self:Tween(Arrow, {Rotation = isVisible and 0 or 180}, 0.2)
+            
+            -- Fade in/out effect
+            ButtonContainer.BackgroundTransparency = isVisible and 1 or 0.9
+            if not isVisible then
+                ButtonContainer.Visible = true
+                self:Tween(ButtonContainer, {BackgroundTransparency = 0.9}, 0.2)
+            end
+        else
+            -- Hide previous tab's buttons if any
+            if self.currentTab then
+                local prevArrow = self.currentTab:FindFirstChild("Arrow")
+                local prevFrame = self.tabFrames[self.currentTab]
+                if prevArrow and prevFrame then
+                    self:Tween(prevArrow, {Rotation = 0}, 0.2)
+                    prevFrame.ButtonContainer.Visible = false
+                end
+            end
+            
+            -- Show new tab
+            self.currentTab = TabButton
+            for _, frame in pairs(self.contentFrame:GetChildren()) do
+                frame.Visible = false
+            end
+            TabFrame.Visible = true
+            
+            -- Show buttons and rotate arrow
+            ButtonContainer.Visible = true
+            self:Tween(Arrow, {Rotation = 180}, 0.2)
+            
+            -- Fade in effect
+            ButtonContainer.BackgroundTransparency = 0.9
+            self:Tween(ButtonContainer, {BackgroundTransparency = 0.9}, 0.2)
+        end
+    end)
+    
+    TabButton.Parent = self.tabButtons
+    self.tabFrames[TabButton] = TabFrame
+    
+    -- Set first tab as active by default
+    if index == 1 then
+        TabButton.BackgroundColor3 = self.Theme.Accent
+        TabFrame.Visible = true
+        self.currentTab = TabButton
+    end
+end
+
+-- Helper function for tweening
+function ModernUILib:Tween(instance, properties, duration)
+    local TweenService = game:GetService("TweenService")
+    local tweenInfo = TweenInfo.new(duration or 0.2)
+    local tween = TweenService:Create(instance, tweenInfo, properties)
+    tween:Play()
+    return tween
+end
+
+-- Setup draggable functionality
+function ModernUILib:SetupDraggable()
+    local UserInputService = game:GetService("UserInputService")
     local dragging
     local dragInput
     local dragStart
     local startPos
     
-    -- Main screen gui
-    local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "JIGUID"
-    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    ScreenGui.Parent = game:GetService("CoreGui")
+    local function update(input)
+        local delta = input.Position - dragStart
+        self.mainFrame.Position = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        )
+    end
     
-    -- Main frame with V4 styling
-    local MainFrame = Instance.new("Frame")
-    MainFrame.Name = "MainFrame"
-    MainFrame.BackgroundColor3 = theme.Background
-    MainFrame.BorderSizePixel = 0
-    MainFrame.Position = UDim2.new(0.3, 0, 0.25, 0)
-    MainFrame.Size = UDim2.new(0, 500, 0, 400)
-    MainFrame.Parent = ScreenGui
-    
-    -- Title bar with gradient like V4
-    local TitleBar = Instance.new("Frame")
-    TitleBar.Name = "TitleBar"
-    TitleBar.BackgroundColor3 = theme.Primary
-    TitleBar.BorderSizePixel = 0
-    TitleBar.Size = UDim2.new(1, 0, 0, 30)
-    TitleBar.Parent = MainFrame
-    
-    -- Gradient effect
-    local Gradient = Instance.new("UIGradient")
-    Gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 40)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 30))
-    })
-    Gradient.Rotation = 90
-    Gradient.Parent = TitleBar
-    
-    local Title = Instance.new("TextLabel")
-    Title.Name = "Title"
-    Title.BackgroundTransparency = 1
-    Title.Position = UDim2.new(0, 10, 0, 0)
-    Title.Size = UDim2.new(0, 200, 1, 0)
-    Title.Font = Enum.Font.GothamBold
-    Title.Text = title or "JIGUID"
-    Title.TextColor3 = theme.Accent
-    Title.TextSize = 14
-    Title.TextXAlignment = Enum.TextXAlignment.Left
-    Title.Parent = TitleBar
-    
-    -- Close button (V4 style)
-    local CloseButton = Instance.new("TextButton")
-    CloseButton.Name = "CloseButton"
-    CloseButton.BackgroundTransparency = 1
-    CloseButton.Position = UDim2.new(1, -30, 0, 0)
-    CloseButton.Size = UDim2.new(0, 30, 1, 0)
-    CloseButton.Font = Enum.Font.GothamBold
-    CloseButton.Text = "X"
-    CloseButton.TextColor3 = theme.Text
-    CloseButton.TextSize = 14
-    CloseButton.Parent = TitleBar
-    
-    CloseButton.MouseButton1Click:Connect(function()
-        ScreenGui:Destroy()
-    end)
-    
-    -- Divider with subtle glow
-    local Divider = Instance.new("Frame")
-    Divider.Name = "Divider"
-    Divider.BackgroundColor3 = theme.Accent
-    Divider.BorderSizePixel = 0
-    Divider.Position = UDim2.new(0, 0, 0, 30)
-    Divider.Size = UDim2.new(1, 0, 0, 1)
-    Divider.Parent = MainFrame
-    
-    -- Tab buttons container (left side)
-    local TabButtons = Instance.new("Frame")
-    TabButtons.Name = "TabButtons"
-    TabButtons.BackgroundColor3 = theme.Primary
-    TabButtons.BorderSizePixel = 0
-    TabButtons.Position = UDim2.new(0, 0, 0, 31)
-    TabButtons.Size = UDim2.new(0, 120, 0, 369)
-    TabButtons.Parent = MainFrame
-    
-    local UIListLayout = Instance.new("UIListLayout")
-    UIListLayout.Padding = UDim.new(0, 1)
-    UIListLayout.Parent = TabButtons
-    
-    -- Content frame (right side)
-    local ContentFrame = Instance.new("Frame")
-    ContentFrame.Name = "ContentFrame"
-    ContentFrame.BackgroundColor3 = theme.Background
-    ContentFrame.BorderSizePixel = 0
-    ContentFrame.Position = UDim2.new(0, 120, 0, 31)
-    ContentFrame.Size = UDim2.new(0, 380, 0, 369)
-    ContentFrame.Parent = MainFrame
-    
-    -- Error bar (bottom section like your image)
-    local ErrorBar = Instance.new("Frame")
-    ErrorBar.Name = "ErrorBar"
-    ErrorBar.BackgroundColor3 = theme.Primary
-    ErrorBar.BorderSizePixel = 0
-    ErrorBar.Position = UDim2.new(0, 0, 0, 400)
-    ErrorBar.Size = UDim2.new(1, 0, 0, 30)
-    ErrorBar.Visible = false -- Hidden by default
-    ErrorBar.Parent = MainFrame
-    
-    local ErrorLabel = Instance.new("TextLabel")
-    ErrorLabel.Name = "ErrorLabel"
-    ErrorLabel.BackgroundTransparency = 1
-    ErrorLabel.Size = UDim2.new(1, -10, 1, 0)
-    ErrorLabel.Position = UDim2.new(0, 10, 0, 0)
-    ErrorLabel.Font = Enum.Font.Gotham
-    ErrorLabel.Text = ""
-    ErrorLabel.TextColor3 = theme.Error
-    ErrorLabel.TextSize = 12
-    ErrorLabel.TextXAlignment = Enum.TextXAlignment.Left
-    ErrorLabel.Parent = ErrorBar
-    
-    -- Dragging functionality
-    TitleBar.InputBegan:Connect(function(input)
+    self.mainFrame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
-            startPos = MainFrame.Position
+            startPos = self.mainFrame.Position
             
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
@@ -147,243 +313,109 @@ function JIGUID:CreateWindow(title)
         end
     end)
     
-    TitleBar.InputChanged:Connect(function(input)
+    self.mainFrame.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement then
             dragInput = input
         end
     end)
     
-    game:GetService("UserInputService").InputChanged:Connect(function(input)
+    UserInputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
-            local delta = input.Position - dragStart
-            MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            update(input)
+        end
+    end)
+end
+
+-- Add a button to a tab
+function ModernUILib:AddButton(tabName, buttonName, callback)
+    if not self.buttons[tabName] then
+        warn("Tab '"..tabName.."' not found!")
+        return
+    end
+    
+    -- Find the tab frame
+    local tabFrame
+    for _, frame in pairs(self.tabFrames) do
+        if frame.Name == tabName.."Frame" then
+            tabFrame = frame
+            break
+        end
+    end
+    
+    if not tabFrame then return end
+    
+    local ButtonContainer = tabFrame:FindFirstChild("ButtonContainer")
+    if not ButtonContainer then return end
+    
+    -- Create the button
+    local Button = Instance.new("TextButton")
+    Button.Name = buttonName
+    Button.Text = buttonName
+    Button.Size = UDim2.new(1, 0, 0, 40)
+    Button.BackgroundColor3 = self.Theme.Button
+    Button.TextColor3 = self.Theme.TextColor
+    Button.Font = self.Theme.Font
+    Button.TextSize = self.Theme.TextSize
+    Button.BorderSizePixel = 0
+    
+    -- Add corner rounding
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, self.Theme.CornerRadius)
+    UICorner.Parent = Button
+    
+    -- Store button reference
+    self.buttons[tabName][buttonName] = Button
+    
+    -- Hover effect
+    Button.MouseEnter:Connect(function()
+        self:Tween(Button, {BackgroundColor3 = self.Theme.ButtonHover}, 0.2)
+    end)
+    
+    Button.MouseLeave:Connect(function()
+        self:Tween(Button, {BackgroundColor3 = self.Theme.Button}, 0.2)
+    end)
+    
+    -- Click effect
+    Button.MouseButton1Down:Connect(function()
+        self:Tween(Button, {
+            BackgroundColor3 = self.Theme.Accent,
+            TextColor3 = Color3.new(1, 1, 1)
+        }, 0.1)
+    end)
+    
+    Button.MouseButton1Up:Connect(function()
+        self:Tween(Button, {
+            BackgroundColor3 = self.Theme.ButtonHover,
+            TextColor3 = self.Theme.TextColor
+        }, 0.2)
+        
+        -- Call the callback if provided
+        if callback then
+            callback()
         end
     end)
     
-    -- Tab functions
-    function JIGUIDLibrary:CreateTab(name)
-        local Tab = {}
-        
-        -- Tab button with V4 style
-        local TabButton = Instance.new("TextButton")
-        TabButton.Name = name
-        TabButton.BackgroundColor3 = theme.Secondary
-        TabButton.BorderSizePixel = 0
-        TabButton.Size = UDim2.new(1, 0, 0, 30)
-        TabButton.Font = Enum.Font.GothamSemibold
-        TabButton.Text = name
-        TabButton.TextColor3 = theme.Text
-        TabButton.TextSize = 12
-        TabButton.Parent = TabButtons
-        
-        -- Tab content
-        local TabContent = Instance.new("ScrollingFrame")
-        TabContent.Name = name
-        TabContent.BackgroundTransparency = 1
-        TabContent.BorderSizePixel = 0
-        TabContent.Size = UDim2.new(1, 0, 1, 0)
-        TabContent.Visible = false
-        TabContent.ScrollBarThickness = 3
-        TabContent.ScrollBarImageColor3 = theme.Accent
-        TabContent.Parent = ContentFrame
-        
-        local TabContentLayout = Instance.new("UIListLayout")
-        TabContentLayout.Padding = UDim.new(0, 10)
-        TabContentLayout.Parent = TabContent
-        
-        -- Make first tab visible by default
-        if #TabButtons:GetChildren() == 2 then -- 1 for UIListLayout
-            TabContent.Visible = true
-            TabButton.BackgroundColor3 = theme.Accent
-        end
-        
-        -- Tab button click event
-        TabButton.MouseButton1Click:Connect(function()
-            for _, child in ipairs(ContentFrame:GetChildren()) do
-                if child:IsA("ScrollingFrame") then
-                    child.Visible = false
-                end
-            end
-            
-            for _, child in ipairs(TabButtons:GetChildren()) do
-                if child:IsA("TextButton") then
-                    child.BackgroundColor3 = theme.Secondary
-                end
-            end
-            
-            TabContent.Visible = true
-            TabButton.BackgroundColor3 = theme.Accent
-        end)
-        
-        -- Section function with table view like your image
-        function Tab:CreateSection(name)
-            local Section = {}
-            
-            -- Section frame
-            local SectionFrame = Instance.new("Frame")
-            SectionFrame.Name = name
-            SectionFrame.BackgroundColor3 = theme.Primary
-            SectionFrame.BorderSizePixel = 0
-            SectionFrame.Size = UDim2.new(1, -20, 0, 30)
-            SectionFrame.Parent = TabContent
-            
-            -- Section title
-            local SectionTitle = Instance.new("TextLabel")
-            SectionTitle.Name = "Title"
-            SectionTitle.BackgroundTransparency = 1
-            SectionTitle.Position = UDim2.new(0, 10, 0, 0)
-            SectionTitle.Size = UDim2.new(1, -10, 1, 0)
-            SectionTitle.Font = Enum.Font.GothamSemibold
-            SectionTitle.Text = "  "..name
-            SectionTitle.TextColor3 = theme.Accent
-            SectionTitle.TextSize = 12
-            SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
-            SectionTitle.Parent = SectionFrame
-            
-            -- Section content
-            local SectionContent = Instance.new("Frame")
-            SectionContent.Name = "Content"
-            SectionContent.BackgroundColor3 = theme.Secondary
-            SectionContent.BorderSizePixel = 0
-            SectionContent.Position = UDim2.new(0, 0, 0, 30)
-            SectionContent.Size = UDim2.new(1, 0, 0, 0)
-            SectionContent.Parent = SectionFrame
-            
-            local SectionContentLayout = Instance.new("UIListLayout")
-            SectionContentLayout.Padding = UDim.new(0, 5)
-            SectionContentLayout.Parent = SectionContent
-            
-            -- Update section size when content changes
-            SectionContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                SectionFrame.Size = UDim2.new(1, -20, 0, 30 + SectionContentLayout.AbsoluteContentSize.Y)
-                SectionContent.Size = UDim2.new(1, 0, 0, SectionContentLayout.AbsoluteContentSize.Y)
-            end)
-            
-            -- Create table view like your Errorbar section
-            function Section:CreateTable(headers, rows)
-                local TableFrame = Instance.new("Frame")
-                TableFrame.Name = "TableFrame"
-                TableFrame.BackgroundColor3 = theme.Background
-                TableFrame.BorderSizePixel = 0
-                TableFrame.Size = UDim2.new(1, 0, 0, 30 + (#rows * 25))
-                TableFrame.Parent = SectionContent
-                
-                -- Header row
-                local HeaderFrame = Instance.new("Frame")
-                HeaderFrame.Name = "HeaderFrame"
-                HeaderFrame.BackgroundColor3 = theme.Primary
-                HeaderFrame.BorderSizePixel = 0
-                HeaderFrame.Size = UDim2.new(1, 0, 0, 25)
-                HeaderFrame.Parent = TableFrame
-                
-                -- Create columns based on headers
-                for i, header in ipairs(headers) do
-                    local columnWidth = 1 / #headers
-                    local HeaderLabel = Instance.new("TextLabel")
-                    HeaderLabel.Name = header
-                    HeaderLabel.BackgroundTransparency = 1
-                    HeaderLabel.Position = UDim2.new((i-1) * columnWidth, 5, 0, 0)
-                    HeaderLabel.Size = UDim2.new(columnWidth, -10, 1, 0)
-                    HeaderLabel.Font = Enum.Font.GothamSemibold
-                    HeaderLabel.Text = header
-                    HeaderLabel.TextColor3 = theme.Accent
-                    HeaderLabel.TextSize = 12
-                    HeaderLabel.TextXAlignment = Enum.TextXAlignment.Left
-                    HeaderLabel.Parent = HeaderFrame
-                    
-                    -- Add divider between columns
-                    if i < #headers then
-                        local Divider = Instance.new("Frame")
-                        Divider.Name = "Divider"
-                        Divider.BackgroundColor3 = theme.Divider
-                        Divider.BorderSizePixel = 0
-                        Divider.Position = UDim2.new(i * columnWidth, 0, 0, 0)
-                        Divider.Size = UDim2.new(0, 1, 1, 0)
-                        Divider.Parent = HeaderFrame
-                    end
-                end
-                
-                -- Create data rows
-                for rowIndex, rowData in ipairs(rows) do
-                    local RowFrame = Instance.new("Frame")
-                    RowFrame.Name = "Row_"..rowIndex
-                    RowFrame.BackgroundColor3 = rowIndex % 2 == 0 and theme.Secondary or Color3.fromRGB(40, 40, 50)
-                    RowFrame.BorderSizePixel = 0
-                    RowFrame.Position = UDim2.new(0, 0, 0, 25 + ((rowIndex-1) * 25))
-                    RowFrame.Size = UDim2.new(1, 0, 0, 25)
-                    RowFrame.Parent = TableFrame
-                    
-                    -- Create cells for each row
-                    for colIndex, cellValue in ipairs(rowData) do
-                        local columnWidth = 1 / #headers
-                        local CellLabel = Instance.new("TextLabel")
-                        CellLabel.Name = "Cell_"..colIndex
-                        CellLabel.BackgroundTransparency = 1
-                        CellLabel.Position = UDim2.new((colIndex-1) * columnWidth, 5, 0, 0)
-                        CellLabel.Size = UDim2.new(columnWidth, -10, 1, 0)
-                        CellLabel.Font = Enum.Font.Gotham
-                        CellLabel.Text = tostring(cellValue)
-                        CellLabel.TextColor3 = theme.Text
-                        CellLabel.TextSize = 12
-                        CellLabel.TextXAlignment = Enum.TextXAlignment.Left
-                        CellLabel.Parent = RowFrame
-                    end
-                end
-                
-                return TableFrame
-            end
-            
-            -- Button element with V4 style
-            function Section:CreateButton(text, callback)
-                local Button = Instance.new("TextButton")
-                Button.Name = text
-                Button.BackgroundColor3 = theme.Background
-                Button.BorderSizePixel = 0
-                Button.Size = UDim2.new(1, -10, 0, 25)
-                Button.Font = Enum.Font.GothamSemibold
-                Button.Text = text
-                Button.TextColor3 = theme.Text
-                Button.TextSize = 12
-                Button.Parent = SectionContent
-                
-                -- Hover effects
-                Button.MouseEnter:Connect(function()
-                    game:GetService("TweenService"):Create(Button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(30, 30, 40)}):Play()
-                end)
-                
-                Button.MouseLeave:Connect(function()
-                    game:GetService("TweenService"):Create(Button, TweenInfo.new(0.1), {BackgroundColor3 = theme.Background}):Play()
-                end)
-                
-                Button.MouseButton1Click:Connect(function()
-                    if callback then
-                        callback()
-                    end
-                end)
-                
-                return Button
-            end
-            
-            return Section
-        end
-        
-        -- Show error message in the bottom bar
-        function JIGUIDLibrary:ShowError(message)
-            ErrorLabel.Text = message
-            ErrorBar.Visible = true
-            wait(3)
-            ErrorBar.Visible = false
-        end
-        
-        return Tab
-    end
-    
-    -- Close function
-    function JIGUIDLibrary:Close()
-        ScreenGui:Destroy()
-    end
-    
-    return JIGUIDLibrary
+    Button.Parent = ButtonContainer
 end
 
-return JIGUID
+-- Toggle UI visibility
+function ModernUILib:Toggle()
+    self.gui.Enabled = not self.gui.Enabled
+end
+
+-- Show UI
+function ModernUILib:Show()
+    self.gui.Enabled = true
+end
+
+-- Hide UI
+function ModernUILib:Hide()
+    self.gui.Enabled = false
+end
+
+-- Destroy UI
+function ModernUILib:Destroy()
+    self.gui:Destroy()
+end
+
+return ModernUILib
