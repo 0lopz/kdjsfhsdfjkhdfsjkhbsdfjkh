@@ -1,18 +1,19 @@
-local VapeUI = {}
+local JIGUID = {}
 
--- Theme colors
+-- VAPE V4 inspired theme
 local theme = {
-    Background = Color3.fromRGB(20, 20, 25),
-    Primary = Color3.fromRGB(40, 40, 50),
-    Secondary = Color3.fromRGB(60, 60, 75),
-    Accent = Color3.fromRGB(0, 150, 255),
+    Background = Color3.fromRGB(15, 15, 20),
+    Primary = Color3.fromRGB(25, 25, 30),
+    Secondary = Color3.fromRGB(35, 35, 45),
+    Accent = Color3.fromRGB(0, 162, 255),
     Text = Color3.fromRGB(220, 220, 220),
-    Divider = Color3.fromRGB(50, 50, 60)
+    Divider = Color3.fromRGB(45, 45, 55),
+    Error = Color3.fromRGB(255, 50, 50)
 }
 
--- Create main window
-function VapeUI:CreateWindow(title)
-    local VapeLibrary = {}
+-- Create main window with VAPE V4 styling
+function JIGUID:CreateWindow(title)
+    local JIGUIDLibrary = {}
     local dragging
     local dragInput
     local dragStart
@@ -20,20 +21,20 @@ function VapeUI:CreateWindow(title)
     
     -- Main screen gui
     local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "VapeUI"
+    ScreenGui.Name = "JIGUID"
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.Parent = game:GetService("CoreGui")
     
-    -- Main frame
+    -- Main frame with V4 styling
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.BackgroundColor3 = theme.Background
     MainFrame.BorderSizePixel = 0
     MainFrame.Position = UDim2.new(0.3, 0, 0.25, 0)
-    MainFrame.Size = UDim2.new(0, 450, 0, 500)
+    MainFrame.Size = UDim2.new(0, 500, 0, 400)
     MainFrame.Parent = ScreenGui
     
-    -- Title bar
+    -- Title bar with gradient like V4
     local TitleBar = Instance.new("Frame")
     TitleBar.Name = "TitleBar"
     TitleBar.BackgroundColor3 = theme.Primary
@@ -41,48 +42,95 @@ function VapeUI:CreateWindow(title)
     TitleBar.Size = UDim2.new(1, 0, 0, 30)
     TitleBar.Parent = MainFrame
     
+    -- Gradient effect
+    local Gradient = Instance.new("UIGradient")
+    Gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 40)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 30))
+    })
+    Gradient.Rotation = 90
+    Gradient.Parent = TitleBar
+    
     local Title = Instance.new("TextLabel")
     Title.Name = "Title"
     Title.BackgroundTransparency = 1
     Title.Position = UDim2.new(0, 10, 0, 0)
     Title.Size = UDim2.new(0, 200, 1, 0)
-    Title.Font = Enum.Font.GothamSemibold
-    Title.Text = title or "VAPE"
-    Title.TextColor3 = theme.Text
+    Title.Font = Enum.Font.GothamBold
+    Title.Text = title or "JIGUID"
+    Title.TextColor3 = theme.Accent
     Title.TextSize = 14
     Title.TextXAlignment = Enum.TextXAlignment.Left
     Title.Parent = TitleBar
     
-    -- Divider
+    -- Close button (V4 style)
+    local CloseButton = Instance.new("TextButton")
+    CloseButton.Name = "CloseButton"
+    CloseButton.BackgroundTransparency = 1
+    CloseButton.Position = UDim2.new(1, -30, 0, 0)
+    CloseButton.Size = UDim2.new(0, 30, 1, 0)
+    CloseButton.Font = Enum.Font.GothamBold
+    CloseButton.Text = "X"
+    CloseButton.TextColor3 = theme.Text
+    CloseButton.TextSize = 14
+    CloseButton.Parent = TitleBar
+    
+    CloseButton.MouseButton1Click:Connect(function()
+        ScreenGui:Destroy()
+    end)
+    
+    -- Divider with subtle glow
     local Divider = Instance.new("Frame")
     Divider.Name = "Divider"
-    Divider.BackgroundColor3 = theme.Divider
+    Divider.BackgroundColor3 = theme.Accent
     Divider.BorderSizePixel = 0
     Divider.Position = UDim2.new(0, 0, 0, 30)
     Divider.Size = UDim2.new(1, 0, 0, 1)
     Divider.Parent = MainFrame
     
-    -- Tab buttons container
+    -- Tab buttons container (left side)
     local TabButtons = Instance.new("Frame")
     TabButtons.Name = "TabButtons"
     TabButtons.BackgroundColor3 = theme.Primary
     TabButtons.BorderSizePixel = 0
     TabButtons.Position = UDim2.new(0, 0, 0, 31)
-    TabButtons.Size = UDim2.new(0, 120, 0, 469)
+    TabButtons.Size = UDim2.new(0, 120, 0, 369)
     TabButtons.Parent = MainFrame
     
     local UIListLayout = Instance.new("UIListLayout")
-    UIListLayout.Padding = UDim.new(0, 5)
+    UIListLayout.Padding = UDim.new(0, 1)
     UIListLayout.Parent = TabButtons
     
-    -- Content frame
+    -- Content frame (right side)
     local ContentFrame = Instance.new("Frame")
     ContentFrame.Name = "ContentFrame"
     ContentFrame.BackgroundColor3 = theme.Background
     ContentFrame.BorderSizePixel = 0
     ContentFrame.Position = UDim2.new(0, 120, 0, 31)
-    ContentFrame.Size = UDim2.new(0, 330, 0, 469)
+    ContentFrame.Size = UDim2.new(0, 380, 0, 369)
     ContentFrame.Parent = MainFrame
+    
+    -- Error bar (bottom section like your image)
+    local ErrorBar = Instance.new("Frame")
+    ErrorBar.Name = "ErrorBar"
+    ErrorBar.BackgroundColor3 = theme.Primary
+    ErrorBar.BorderSizePixel = 0
+    ErrorBar.Position = UDim2.new(0, 0, 0, 400)
+    ErrorBar.Size = UDim2.new(1, 0, 0, 30)
+    ErrorBar.Visible = false -- Hidden by default
+    ErrorBar.Parent = MainFrame
+    
+    local ErrorLabel = Instance.new("TextLabel")
+    ErrorLabel.Name = "ErrorLabel"
+    ErrorLabel.BackgroundTransparency = 1
+    ErrorLabel.Size = UDim2.new(1, -10, 1, 0)
+    ErrorLabel.Position = UDim2.new(0, 10, 0, 0)
+    ErrorLabel.Font = Enum.Font.Gotham
+    ErrorLabel.Text = ""
+    ErrorLabel.TextColor3 = theme.Error
+    ErrorLabel.TextSize = 12
+    ErrorLabel.TextXAlignment = Enum.TextXAlignment.Left
+    ErrorLabel.Parent = ErrorBar
     
     -- Dragging functionality
     TitleBar.InputBegan:Connect(function(input)
@@ -113,16 +161,16 @@ function VapeUI:CreateWindow(title)
     end)
     
     -- Tab functions
-    function VapeLibrary:CreateTab(name)
+    function JIGUIDLibrary:CreateTab(name)
         local Tab = {}
         
-        -- Tab button
+        -- Tab button with V4 style
         local TabButton = Instance.new("TextButton")
         TabButton.Name = name
         TabButton.BackgroundColor3 = theme.Secondary
         TabButton.BorderSizePixel = 0
-        TabButton.Size = UDim2.new(1, -10, 0, 30)
-        TabButton.Font = Enum.Font.Gotham
+        TabButton.Size = UDim2.new(1, 0, 0, 30)
+        TabButton.Font = Enum.Font.GothamSemibold
         TabButton.Text = name
         TabButton.TextColor3 = theme.Text
         TabButton.TextSize = 12
@@ -167,7 +215,7 @@ function VapeUI:CreateWindow(title)
             TabButton.BackgroundColor3 = theme.Accent
         end)
         
-        -- Section function
+        -- Section function with table view like your image
         function Tab:CreateSection(name)
             local Section = {}
             
@@ -187,7 +235,7 @@ function VapeUI:CreateWindow(title)
             SectionTitle.Size = UDim2.new(1, -10, 1, 0)
             SectionTitle.Font = Enum.Font.GothamSemibold
             SectionTitle.Text = "  "..name
-            SectionTitle.TextColor3 = theme.Text
+            SectionTitle.TextColor3 = theme.Accent
             SectionTitle.TextSize = 12
             SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
             SectionTitle.Parent = SectionFrame
@@ -211,18 +259,101 @@ function VapeUI:CreateWindow(title)
                 SectionContent.Size = UDim2.new(1, 0, 0, SectionContentLayout.AbsoluteContentSize.Y)
             end)
             
-            -- Button element
+            -- Create table view like your Errorbar section
+            function Section:CreateTable(headers, rows)
+                local TableFrame = Instance.new("Frame")
+                TableFrame.Name = "TableFrame"
+                TableFrame.BackgroundColor3 = theme.Background
+                TableFrame.BorderSizePixel = 0
+                TableFrame.Size = UDim2.new(1, 0, 0, 30 + (#rows * 25))
+                TableFrame.Parent = SectionContent
+                
+                -- Header row
+                local HeaderFrame = Instance.new("Frame")
+                HeaderFrame.Name = "HeaderFrame"
+                HeaderFrame.BackgroundColor3 = theme.Primary
+                HeaderFrame.BorderSizePixel = 0
+                HeaderFrame.Size = UDim2.new(1, 0, 0, 25)
+                HeaderFrame.Parent = TableFrame
+                
+                -- Create columns based on headers
+                for i, header in ipairs(headers) do
+                    local columnWidth = 1 / #headers
+                    local HeaderLabel = Instance.new("TextLabel")
+                    HeaderLabel.Name = header
+                    HeaderLabel.BackgroundTransparency = 1
+                    HeaderLabel.Position = UDim2.new((i-1) * columnWidth, 5, 0, 0)
+                    HeaderLabel.Size = UDim2.new(columnWidth, -10, 1, 0)
+                    HeaderLabel.Font = Enum.Font.GothamSemibold
+                    HeaderLabel.Text = header
+                    HeaderLabel.TextColor3 = theme.Accent
+                    HeaderLabel.TextSize = 12
+                    HeaderLabel.TextXAlignment = Enum.TextXAlignment.Left
+                    HeaderLabel.Parent = HeaderFrame
+                    
+                    -- Add divider between columns
+                    if i < #headers then
+                        local Divider = Instance.new("Frame")
+                        Divider.Name = "Divider"
+                        Divider.BackgroundColor3 = theme.Divider
+                        Divider.BorderSizePixel = 0
+                        Divider.Position = UDim2.new(i * columnWidth, 0, 0, 0)
+                        Divider.Size = UDim2.new(0, 1, 1, 0)
+                        Divider.Parent = HeaderFrame
+                    end
+                end
+                
+                -- Create data rows
+                for rowIndex, rowData in ipairs(rows) do
+                    local RowFrame = Instance.new("Frame")
+                    RowFrame.Name = "Row_"..rowIndex
+                    RowFrame.BackgroundColor3 = rowIndex % 2 == 0 and theme.Secondary or Color3.fromRGB(40, 40, 50)
+                    RowFrame.BorderSizePixel = 0
+                    RowFrame.Position = UDim2.new(0, 0, 0, 25 + ((rowIndex-1) * 25))
+                    RowFrame.Size = UDim2.new(1, 0, 0, 25)
+                    RowFrame.Parent = TableFrame
+                    
+                    -- Create cells for each row
+                    for colIndex, cellValue in ipairs(rowData) do
+                        local columnWidth = 1 / #headers
+                        local CellLabel = Instance.new("TextLabel")
+                        CellLabel.Name = "Cell_"..colIndex
+                        CellLabel.BackgroundTransparency = 1
+                        CellLabel.Position = UDim2.new((colIndex-1) * columnWidth, 5, 0, 0)
+                        CellLabel.Size = UDim2.new(columnWidth, -10, 1, 0)
+                        CellLabel.Font = Enum.Font.Gotham
+                        CellLabel.Text = tostring(cellValue)
+                        CellLabel.TextColor3 = theme.Text
+                        CellLabel.TextSize = 12
+                        CellLabel.TextXAlignment = Enum.TextXAlignment.Left
+                        CellLabel.Parent = RowFrame
+                    end
+                end
+                
+                return TableFrame
+            end
+            
+            -- Button element with V4 style
             function Section:CreateButton(text, callback)
                 local Button = Instance.new("TextButton")
                 Button.Name = text
                 Button.BackgroundColor3 = theme.Background
                 Button.BorderSizePixel = 0
                 Button.Size = UDim2.new(1, -10, 0, 25)
-                Button.Font = Enum.Font.Gotham
+                Button.Font = Enum.Font.GothamSemibold
                 Button.Text = text
                 Button.TextColor3 = theme.Text
                 Button.TextSize = 12
                 Button.Parent = SectionContent
+                
+                -- Hover effects
+                Button.MouseEnter:Connect(function()
+                    game:GetService("TweenService"):Create(Button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(30, 30, 40)}):Play()
+                end)
+                
+                Button.MouseLeave:Connect(function()
+                    game:GetService("TweenService"):Create(Button, TweenInfo.new(0.1), {BackgroundColor3 = theme.Background}):Play()
+                end)
                 
                 Button.MouseButton1Click:Connect(function()
                     if callback then
@@ -233,162 +364,26 @@ function VapeUI:CreateWindow(title)
                 return Button
             end
             
-            -- Toggle element
-            function Section:CreateToggle(text, default, callback)
-                local Toggle = {}
-                local state = default or false
-                
-                local ToggleFrame = Instance.new("Frame")
-                ToggleFrame.Name = text
-                ToggleFrame.BackgroundTransparency = 1
-                ToggleFrame.Size = UDim2.new(1, -10, 0, 25)
-                ToggleFrame.Parent = SectionContent
-                
-                local ToggleButton = Instance.new("TextButton")
-                ToggleButton.Name = "Button"
-                ToggleButton.BackgroundColor3 = theme.Background
-                ToggleButton.BorderSizePixel = 0
-                ToggleButton.Size = UDim2.new(0.8, 0, 1, 0)
-                ToggleButton.Font = Enum.Font.Gotham
-                ToggleButton.Text = text
-                ToggleButton.TextColor3 = theme.Text
-                ToggleButton.TextSize = 12
-                ToggleButton.TextXAlignment = Enum.TextXAlignment.Left
-                ToggleButton.Parent = ToggleFrame
-                
-                local ToggleIndicator = Instance.new("Frame")
-                ToggleIndicator.Name = "Indicator"
-                ToggleIndicator.BackgroundColor3 = state and theme.Accent or Color3.fromRGB(80, 80, 80)
-                ToggleIndicator.BorderSizePixel = 0
-                ToggleIndicator.Position = UDim2.new(0.85, 0, 0.2, 0)
-                ToggleIndicator.Size = UDim2.new(0, 40, 0, 15)
-                ToggleIndicator.Parent = ToggleFrame
-                
-                local ToggleDot = Instance.new("Frame")
-                ToggleDot.Name = "Dot"
-                ToggleDot.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
-                ToggleDot.BorderSizePixel = 0
-                ToggleDot.Position = state and UDim2.new(0.5, 0, 0, 0) or UDim2.new(0, 0, 0, 0)
-                ToggleDot.Size = UDim2.new(0, 15, 1, 0)
-                ToggleDot.Parent = ToggleIndicator
-                
-                ToggleButton.MouseButton1Click:Connect(function()
-                    state = not state
-                    ToggleIndicator.BackgroundColor3 = state and theme.Accent or Color3.fromRGB(80, 80, 80)
-                    ToggleDot.Position = state and UDim2.new(0.5, 0, 0, 0) or UDim2.new(0, 0, 0, 0)
-                    
-                    if callback then
-                        callback(state)
-                    end
-                end)
-                
-                function Toggle:Set(value)
-                    state = value
-                    ToggleIndicator.BackgroundColor3 = state and theme.Accent or Color3.fromRGB(80, 80, 80)
-                    ToggleDot.Position = state and UDim2.new(0.5, 0, 0, 0) or UDim2.new(0, 0, 0, 0)
-                    
-                    if callback then
-                        callback(state)
-                    end
-                end
-                
-                return Toggle
-            end
-            
-            -- Dropdown element
-            function Section:CreateDropdown(text, options, callback)
-                local Dropdown = {}
-                local isOpen = false
-                local selected = options[1] or ""
-                
-                local DropdownFrame = Instance.new("Frame")
-                DropdownFrame.Name = text
-                DropdownFrame.BackgroundTransparency = 1
-                DropdownFrame.Size = UDim2.new(1, -10, 0, 25)
-                DropdownFrame.Parent = SectionContent
-                
-                local DropdownButton = Instance.new("TextButton")
-                DropdownButton.Name = "Button"
-                DropdownButton.BackgroundColor3 = theme.Background
-                DropdownButton.BorderSizePixel = 0
-                DropdownButton.Size = UDim2.new(1, 0, 0, 25)
-                DropdownButton.Font = Enum.Font.Gotham
-                DropdownButton.Text = text .. ": " .. selected
-                DropdownButton.TextColor3 = theme.Text
-                DropdownButton.TextSize = 12
-                DropdownButton.TextXAlignment = Enum.TextXAlignment.Left
-                DropdownButton.Parent = DropdownFrame
-                
-                local DropdownList = Instance.new("Frame")
-                DropdownList.Name = "List"
-                DropdownList.BackgroundColor3 = theme.Primary
-                DropdownList.BorderSizePixel = 0
-                DropdownList.Position = UDim2.new(0, 0, 0, 25)
-                DropdownList.Size = UDim2.new(1, 0, 0, 0)
-                DropdownList.Visible = false
-                DropdownList.ZIndex = 2
-                DropdownList.Parent = DropdownFrame
-                
-                local DropdownListLayout = Instance.new("UIListLayout")
-                DropdownListLayout.Parent = DropdownList
-                
-                for _, option in ipairs(options) do
-                    local OptionButton = Instance.new("TextButton")
-                    OptionButton.Name = option
-                    OptionButton.BackgroundColor3 = theme.Secondary
-                    OptionButton.BorderSizePixel = 0
-                    OptionButton.Size = UDim2.new(1, 0, 0, 25)
-                    OptionButton.Font = Enum.Font.Gotham
-                    OptionButton.Text = option
-                    OptionButton.TextColor3 = theme.Text
-                    OptionButton.TextSize = 12
-                    OptionButton.TextXAlignment = Enum.TextXAlignment.Left
-                    OptionButton.Parent = DropdownList
-                    
-                    OptionButton.MouseButton1Click:Connect(function()
-                        selected = option
-                        DropdownButton.Text = text .. ": " .. selected
-                        isOpen = false
-                        DropdownList.Visible = false
-                        
-                        if callback then
-                            callback(selected)
-                        end
-                    end)
-                end
-                
-                DropdownButton.MouseButton1Click:Connect(function()
-                    isOpen = not isOpen
-                    DropdownList.Visible = isOpen
-                    DropdownList.Size = UDim2.new(1, 0, 0, isOpen and (#options * 25) or 0)
-                end)
-                
-                function Dropdown:Set(value)
-                    if table.find(options, value) then
-                        selected = value
-                        DropdownButton.Text = text .. ": " .. selected
-                        
-                        if callback then
-                            callback(selected)
-                        end
-                    end
-                end
-                
-                return Dropdown
-            end
-            
             return Section
+        end
+        
+        -- Show error message in the bottom bar
+        function JIGUIDLibrary:ShowError(message)
+            ErrorLabel.Text = message
+            ErrorBar.Visible = true
+            wait(3)
+            ErrorBar.Visible = false
         end
         
         return Tab
     end
     
     -- Close function
-    function VapeLibrary:Close()
+    function JIGUIDLibrary:Close()
         ScreenGui:Destroy()
     end
     
-    return VapeLibrary
+    return JIGUIDLibrary
 end
 
-return VapeUI
+return JIGUID
